@@ -11,7 +11,6 @@
 #include <vector>
 
 class IPKFTP {
-public:
 	bool connected;
 	bool FileExists(std::string filename);
 	std::vector<unsigned char> FileLoad(std::string filename);

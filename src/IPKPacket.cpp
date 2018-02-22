@@ -28,6 +28,11 @@ IPKPacket::IPKPacket(IPKTransmissionType type, std::string filename, std::vector
 IPKPacket::IPKPacket(const std::vector<unsigned char> message)
 	: type(Unknown), filename(), data()
 {
+	// bypass const for initialization within this constructor
+	auto &type_notconst = *(const_cast<IPKTransmissionType*>(&this->type));
+	auto &filename_notconst = *(const_cast<std::string*>(&this->filename));
+	auto &data_notconst = *(const_cast<std::vector<unsigned char>*>(&this->data));
+
 	// check signature
 	if (this->signature != std::string(message.begin(), message.begin() + 0x6)) {
 		throw(IPKPacketException(SignatureError));
@@ -46,7 +51,7 @@ IPKPacket::IPKPacket(const std::vector<unsigned char> message)
 	if (t >= Unknown || t < 0) {
 		throw(IPKPacketException(TransmissionTypeError));
 	}
-	this->type = t;
+	type_notconst = t;
 	// check overall message size
 	auto overall_size = *(reinterpret_cast<const uint64_t*>(&(*(message.begin() + 0x8))));
 	if (overall_size != message.size() ) {
@@ -60,12 +65,12 @@ IPKPacket::IPKPacket(const std::vector<unsigned char> message)
 				message_data_it = it + 1;
 				break;
 			}
-			this->filename += *it;
+			filename_notconst += *it;
 		}
 	}
 	// load data
 	if (type == OfferFile) {
-		std::copy(message_data_it, message.end() - 0x4, std::back_inserter(this->data));
+		std::copy(message_data_it, message.end() - 0x4, std::back_inserter(data_notconst));
 	}
 }
 
@@ -103,6 +108,16 @@ IPKPacket::operator const std::vector<unsigned char>() const
 	it = std::copy(crc_ptr, crc_ptr + sizeof(crc), it); // crc
 
 	return message;
+}
+
+const std::string IPKPacket::GetFilename() const
+{
+	return this->filename;
+}
+
+const std::vector<unsigned char> IPKPacket::GetData() const
+{
+	return this->data;
 }
 
 IPKPacketException::IPKPacketException(const IPKPacketError error, const std::string message)

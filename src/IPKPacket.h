@@ -65,9 +65,9 @@ enum IPKPacketError {
 class IPKPacket {
 	static const std::string signature;
 	static const uint8_t version;
-	IPKTransmissionType type;
-	std::string filename;
-	std::vector<unsigned char> data;
+	const IPKTransmissionType type;
+	const std::string filename;
+	const std::vector<unsigned char> data;
 public:
 	// Create Packet
 	IPKPacket(IPKTransmissionType type, std::string filename = {}, std::vector<unsigned char> data = {});
@@ -77,6 +77,10 @@ public:
 
 	// Serialize
 	operator const std::vector<unsigned char>() const;
+
+	// Get Filename & Data
+	const std::string GetFilename() const;
+	const std::vector<unsigned char> GetData() const;
 };
 
 class IPKPacketException : public std::runtime_error {

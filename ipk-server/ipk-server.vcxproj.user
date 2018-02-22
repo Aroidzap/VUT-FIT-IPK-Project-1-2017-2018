@@ -4,5 +4,6 @@
     <RemoteTarget>-371638387;localhost (username=, port=2222, authentication=Password)</RemoteTarget>
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+    <RemoteDebuggerCommandArguments>-p 50000</RemoteDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
