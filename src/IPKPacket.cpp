@@ -120,6 +120,24 @@ const std::vector<unsigned char> IPKPacket::GetData() const
 	return this->data;
 }
 
+std::size_t IPKPacket::ExpectedSize(const std::vector<unsigned char> message)
+{
+	// check if it's possible to get size
+	if (message.size() < 16) {
+		throw(IPKPacketException(SizeError));
+	}
+	// check signature
+	if (IPKPacket::signature != std::string(message.begin(), message.begin() + 0x6)) {
+		throw(IPKPacketException(SignatureError));
+	}
+	// check version
+	if (IPKPacket::version != static_cast<uint8_t>(*(message.begin() + 0x6))) {
+		throw(IPKPacketException(VersionError));
+	}
+	const uint64_t overall_size = *(reinterpret_cast<const uint64_t*>(&(*(message.begin() + 0x8))));
+	return overall_size;
+}
+
 IPKPacketException::IPKPacketException(const IPKPacketError error, const std::string message)
 	: std::runtime_error(message), error(error)
 {

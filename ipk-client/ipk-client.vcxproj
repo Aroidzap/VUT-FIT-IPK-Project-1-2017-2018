@@ -65,11 +65,13 @@
     <ClCompile Include="..\src\CRC32.cpp" />
     <ClCompile Include="..\src\IPKFTP.cpp" />
     <ClCompile Include="..\src\IPKPacket.cpp" />
+    <ClCompile Include="..\src\TCP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\CRC32.h" />
     <ClInclude Include="..\src\IPKFTP.h" />
     <ClInclude Include="..\src\IPKPacket.h" />
+    <ClInclude Include="..\src\TCP.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

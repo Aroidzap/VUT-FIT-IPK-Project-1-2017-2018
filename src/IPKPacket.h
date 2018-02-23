@@ -81,6 +81,9 @@ public:
 	// Get Filename & Data
 	const std::string GetFilename() const;
 	const std::vector<unsigned char> GetData() const;
+
+	// Get expected size from incomplete serialized packet (min size == 16)
+	static std::size_t ExpectedSize(const std::vector<unsigned char> message);
 };
 
 class IPKPacketException : public std::runtime_error {

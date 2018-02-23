@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include "IPKFTP.h"
 
 const std::string server_usage = "./ipk-server -p port ";
 
@@ -21,7 +22,12 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
-	std::cout << "HI server at " << arguments.port <<"!" << std::endl;
+	//TODO: handle errors
+	IPKFTP ipkftp;
+	ipkftp.ServerModeEnable(arguments.port);
+	//TODO: keep open
+	ipkftp.ServerModeDisable();
+
 	return 0;
 };
 

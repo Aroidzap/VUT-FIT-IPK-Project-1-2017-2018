@@ -18,6 +18,7 @@
     <ClCompile Include="..\src\IPKPacket.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\TCP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\IPKFTP.h">
@@ -27,6 +28,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\IPKPacket.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\TCP.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
