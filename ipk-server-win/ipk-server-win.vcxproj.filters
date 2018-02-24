@@ -2,23 +2,23 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="src">
-      <UniqueIdentifier>{8619673f-de92-42f5-9295-9aa90da43601}</UniqueIdentifier>
+      <UniqueIdentifier>{e59a0a8a-e33b-4756-801d-c445109320a0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\client.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\IPKFTP.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\CRC32.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\IPKPacket.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\server.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\TCP.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CRC32.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -26,13 +26,13 @@
     <ClInclude Include="..\src\IPKFTP.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\CRC32.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\IPKPacket.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\TCP.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CRC32.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

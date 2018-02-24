@@ -36,23 +36,17 @@ bool load_args(int argc, const char *argv[], args *arguments);
 
 	return 0;
 };*/
-#include <unistd.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <netdb.h>
 
 #include "TCP.h"
 int main() {
 	TCP tcp;
 	std::vector<unsigned char> buffer;
-	tcp.Connect("www.seznam.cz", "80");
-	std::string req = "GET /\r\n";
-	tcp.Send(std::vector<unsigned char>(req.begin(), req.end()));
-	tcp.Recv(buffer, 100000);
-	std::string response(buffer.begin(), buffer.end());
-	std::cout << response;
+	tcp.Listen("8080", [](auto client, auto ip, auto port) {
+		std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\n<html><head><title>Welcome!!!</title></head><body>Hi "+ip+':'+port+" from C++ server!!!</body></html>";
+		std::vector<unsigned char> data(response.begin(), response.end());
+		data.push_back(0);
+		client.Send(data);
+	});
 	tcp.Close();
 }
 

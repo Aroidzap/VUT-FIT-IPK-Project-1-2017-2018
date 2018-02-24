@@ -24,9 +24,9 @@ int main(int argc, const char *argv[]) {
 
 	//TODO: handle errors
 	IPKFTP ipkftp;
-	ipkftp.ServerModeEnable(arguments.port);
+	//ipkftp.ServerModeEnable(arguments.port);
 	//TODO: keep open
-	ipkftp.ServerModeDisable();
+	//ipkftp.ServerModeDisable();
 
 	return 0;
 };

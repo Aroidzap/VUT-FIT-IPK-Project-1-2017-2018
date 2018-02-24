@@ -87,8 +87,8 @@ public:
 };
 
 class IPKPacketException : public std::runtime_error {
-	IPKPacketError error;
 public:
+	const IPKPacketError error;
 	IPKPacketException(const IPKPacketError error, const std::string message = "IPKPacketError");
 };
 

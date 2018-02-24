@@ -9,6 +9,8 @@
 #include <fstream>
 #include <iterator>
 
+const int IPKFTP::retries = 3;
+
 bool IPKFTP::FileExists(std::string filename)
 {
 	return std::ifstream(filename).good();
