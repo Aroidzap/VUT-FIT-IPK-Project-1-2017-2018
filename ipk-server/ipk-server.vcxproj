@@ -26,6 +26,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\CRC32.h" />
+    <ClInclude Include="..\src\IPKFTP.h" />
+    <ClInclude Include="..\src\IPKPacket.h" />
+    <ClInclude Include="..\src\TCP.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\CRC32.cpp" />
+    <ClCompile Include="..\src\IPKFTP.cpp" />
+    <ClCompile Include="..\src\IPKPacket.cpp" />
+    <ClCompile Include="..\src\server.cpp" />
+    <ClCompile Include="..\src\TCP.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{df4d1832-f04a-4833-96cc-da08a01c7c41}</ProjectGuid>
     <Keyword>Linux</Keyword>
@@ -60,17 +73,6 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
-  <ItemGroup>
-    <ClCompile Include="..\src\CRC32.cpp" />
-    <ClCompile Include="..\src\IPKFTP.cpp" />
-    <ClCompile Include="..\src\IPKPacket.cpp" />
-    <ClCompile Include="..\src\server.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\CRC32.h" />
-    <ClInclude Include="..\src\IPKFTP.h" />
-    <ClInclude Include="..\src\IPKPacket.h" />
-  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <CppLanguageStandard>c++1y</CppLanguageStandard>

@@ -12,21 +12,23 @@
 const std::string IPKPacket::signature{ "IPKFTP" };
 const uint8_t IPKPacket::version{ 1 };
 
+const std::size_t IPKPacket::StatusSize = 20; // size of serialized status packet
+
 // Create Packet
 IPKPacket::IPKPacket(IPKTransmissionType type, std::string filename, std::vector<unsigned char> data)
 	: type(type), filename(filename), data(data)
 {
-	if (type == RequestFile && (filename.size() == 0 || data.size() > 0)) {
+	if (type == RequestFile && (filename.size() == 0)) {
 		throw IPKPacketException(PacketCreationError, "IPKTransmissionType::RequestFile requires filename");
 	}
-	else if (type == OfferFile && (filename.size() == 0 || data.size() == 0)) {
+	else if (type == OfferFile && (filename.size() == 0)) {
 		throw IPKPacketException(PacketCreationError, "IPKTransmissionType::OfferFile requires filename");
 	}
 }
 
 // Deserialize
 IPKPacket::IPKPacket(const std::vector<unsigned char> message)
-	: type(Unknown), filename(), data()
+	: type(IPKUnknown), filename(), data()
 {
 	// bypass const for initialization within this constructor
 	auto &type_notconst = *(const_cast<IPKTransmissionType*>(&this->type));
@@ -35,27 +37,27 @@ IPKPacket::IPKPacket(const std::vector<unsigned char> message)
 
 	// check signature
 	if (this->signature != std::string(message.begin(), message.begin() + 0x6)) {
-		throw(IPKPacketException(SignatureError));
+		throw(IPKPacketException(SignatureError, "IPKPacketError: Wrong Signature!"));
 	}
 	// check version
 	if (this->version != static_cast<uint8_t>(*(message.begin() + 0x6))) {
-		throw(IPKPacketException(VersionError));
+		throw(IPKPacketException(VersionError, "IPKPacketError: Wrong Version!"));
 	}
 	// check crc
 	auto crc = *(reinterpret_cast<const uint32_t*>(&(*(message.end() - 0x4))));
 	if (crc != CRC32(message.begin(), message.end() - 0x4)) {
-		throw(IPKPacketException(CRC32Error));
+		throw(IPKPacketException(CRC32Error, "IPKPacketError: CRC32 Error!"));
 	}
 	// check transmission type
 	auto t = static_cast<IPKTransmissionType>(*(message.begin() + 0x7));
-	if (t >= Unknown || t < 0) {
-		throw(IPKPacketException(TransmissionTypeError));
+	if (t >= IPKUnknown || t < 0) {
+		throw(IPKPacketException(TransmissionTypeError, "IPKPacketError: Unknown transmission type!"));
 	}
 	type_notconst = t;
 	// check overall message size
 	auto overall_size = *(reinterpret_cast<const uint64_t*>(&(*(message.begin() + 0x8))));
 	if (overall_size != message.size() ) {
-		throw(IPKPacketException(SizeError));
+		throw(IPKPacketException(SizeError, "IPKPacketError: Size Error!"));
 	}
 	// load filename
 	auto message_data_it = message.end();
@@ -120,22 +122,54 @@ const std::vector<unsigned char> IPKPacket::GetData() const
 	return this->data;
 }
 
+const IPKTransmissionType IPKPacket::Type() const
+{
+	return this->type;
+}
+
+IPKTransmissionType IPKPacket::Type(const std::vector<unsigned char> message)
+{
+	// check if it's possible to get size
+	if (message.size() < 8) {
+		throw(IPKPacketException(SizeError, "IPKPacketError: Transmission Type of serialized packet: Not enough data (<8)!"));
+	}
+	// check signature
+	if (IPKPacket::signature != std::string(message.begin(), message.begin() + 0x6)) {
+		throw(IPKPacketException(SignatureError, "IPKPacketError: Wrong Signature!"));
+	}
+	// check version
+	if (IPKPacket::version != static_cast<uint8_t>(*(message.begin() + 0x6))) {
+		throw(IPKPacketException(VersionError, "IPKPacketError: Wrong Version!"));
+	}
+	return static_cast<IPKTransmissionType>(*(message.begin() + 0x7));
+}
+
 std::size_t IPKPacket::ExpectedSize(const std::vector<unsigned char> message)
 {
 	// check if it's possible to get size
 	if (message.size() < 16) {
-		throw(IPKPacketException(SizeError));
+		throw(IPKPacketException(SizeError, "IPKPacketError: ExpectedSize: Not enough data (<16)!"));
 	}
 	// check signature
 	if (IPKPacket::signature != std::string(message.begin(), message.begin() + 0x6)) {
-		throw(IPKPacketException(SignatureError));
+		throw(IPKPacketException(SignatureError, "IPKPacketError: Wrong Signature!"));
 	}
 	// check version
 	if (IPKPacket::version != static_cast<uint8_t>(*(message.begin() + 0x6))) {
-		throw(IPKPacketException(VersionError));
+		throw(IPKPacketException(VersionError, "IPKPacketError: Wrong Version!"));
 	}
 	const uint64_t overall_size = *(reinterpret_cast<const uint64_t*>(&(*(message.begin() + 0x8))));
 	return overall_size;
+}
+
+bool IPKPacket::operator==(const IPKTransmissionType t) const
+{
+	return this->type == t;
+}
+
+bool IPKPacket::operator!=(const IPKTransmissionType t) const
+{
+	return this->type != t;
 }
 
 IPKPacketException::IPKPacketException(const IPKPacketError error, const std::string message)

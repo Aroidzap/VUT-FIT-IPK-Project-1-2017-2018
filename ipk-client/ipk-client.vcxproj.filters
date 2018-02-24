@@ -6,13 +6,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\client.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\IPKFTP.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\CRC32.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\IPKPacket.cpp">
@@ -21,18 +15,24 @@
     <ClCompile Include="..\src\TCP.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CRC32.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\IPKFTP.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\CRC32.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\IPKPacket.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\TCP.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CRC32.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

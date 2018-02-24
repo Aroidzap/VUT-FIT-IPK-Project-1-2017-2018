@@ -45,13 +45,13 @@
 const int TCP::maxconnections = SOMAXCONN;
 const bool TCP::nonblocking = true;
 static const std::size_t default_block_size = 1024;
-static const int default_timeout = 7;
+static const int default_timeout = 70;
 
 
 void TCP::Connect(std::string host, std::string port)
 {
 	if (this->connected == true) {
-		throw(TCPException(ConnectFailed));
+		throw(TCPException(ConnectFailed, "TCPError: Connect: Already connected!"));
 	}
 
 	struct addrinfo hints {}, *result;
@@ -62,7 +62,7 @@ void TCP::Connect(std::string host, std::string port)
 
 	// convert string address to internal representation
 	if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) {
-		throw(TCPException(ConnectFailed)); // getaddrinfo failed
+		throw(TCPException(ConnectFailed, "TCPError: Unable to resolve host name!")); // getaddrinfo failed
 	}
 
 	// connect to one of the results of getaddrinfo
@@ -75,7 +75,7 @@ void TCP::Connect(std::string host, std::string port)
 					if(!setNonBlocking(this->sock)){
 						shutdown(this->sock, SHUT_RDWR);
 						close(this->sock);
-						throw(TCPException(setNonBlockingFailed));
+						throw(TCPException(setNonBlockingFailed, "TCPError: Unable to make socket non-blocking!"));
 					}
 				}
 				this->connected = true;
@@ -87,7 +87,7 @@ void TCP::Connect(std::string host, std::string port)
 		}
 	}
 	if (this->connected == false) {
-		throw(TCPException(ConnectFailed));
+		throw(TCPException(ConnectFailed, "TCPError: Connect Failed!"));
 	}
 }
 
@@ -97,7 +97,7 @@ void TCP::Listen(std::string port, std::function<void(TCP)> clientConnectionHand
 void TCP::Listen(std::string port, std::function<void(TCP, const std::string, const std::string)> clientConnectionHandler, std::string host)
 {
 	if (this->connected == true) {
-		throw(TCPException(ListenFailed));
+		throw(TCPException(ListenFailed, "TCPError: Listen: Already connected!"));
 	}
 
 	struct addrinfo hints {0}, *result;
@@ -114,7 +114,7 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 
 	// convert string address to internal representation
 	if (getaddrinfo(hostname, port.c_str(), &hints, &result) != 0) {
-		throw(TCPException(ListenFailed)); // getaddrinfo failed
+		throw(TCPException(ListenFailed, "TCPError: Unable to resolve host name!")); // getaddrinfo failed
 	}
 
 	// bind and listen to one of the results of getaddrinfo
@@ -125,7 +125,7 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 				freeaddrinfo(result);
 				if (listen(this->sock, maxconnections) == SOCKET_ERROR) { // listen
 					close(this->sock);
-					throw(TCPException(ListenFailed));
+					throw(TCPException(ListenFailed, "TCPError: listen Failed!"));
 				}
 				this->connected = true;
 				break;
@@ -139,24 +139,24 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 #endif
 				close(this->sock);
 				if (addr_port_in_use) {
-					throw(TCPException(AddrPortInUse));
+					throw(TCPException(AddrPortInUse, "TCPError: Address and port are already in use!"));
 				}
 				else {
-					throw(TCPException(BindingFailed));
+					throw(TCPException(BindingFailed, "TCPError: bind Failed!"));
 				}
 			}
 		}
 	}
 	if (this->connected == false) {
-		throw(TCPException(ListenFailed));
+		throw(TCPException(ListenFailed, "TCPError: ListenFailed!"));
 	}
 
-	// accept loop
+	// accept loop (infinite for now)
 	bool done = false;
 	while (!done) {
 		TCPSocket client = accept(this->sock, NULL, NULL); // accept IPv4 and IPv6
 		if (client == INVALID_SOCKET) {
-			throw(TCPException(ListenFailed));
+			throw(TCPException(ListenFailed, "TCPError: accept Failed!"));
 		}
 
 		sockaddr_storage addr_stor; socklen_t addr_len = sizeof(addr_stor);
@@ -168,17 +168,17 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 			if (!setNonBlocking(client)) {
 				shutdown(client, SHUT_RDWR);
 				close(client);
-				throw(TCPException(setNonBlockingFailed));
+				throw(TCPException(setNonBlockingFailed, "TCPError: Unable to make socket non-blocking!"));
 			}
 		}
 		// call connection handler
 		if (clientConnectionHandler) {
 			char client_ip_buffer[INET6_ADDRSTRLEN];
 			std::string client_port;
-			if (addr_stor.ss_family = AF_INET) {
+			if (addr_stor.ss_family == AF_INET) {
 				inet_ntop(addr4->sin_family, &(addr4->sin_addr), client_ip_buffer, sizeof(client_ip_buffer));
 				client_port = std::to_string(ntohs(addr4->sin_port));
-			} else if (addr_stor.ss_family = AF_INET6) {
+			} else if (addr_stor.ss_family == AF_INET6) {
 				inet_ntop(addr6->sin6_family, &(addr6->sin6_addr), client_ip_buffer, sizeof(client_ip_buffer));
 				client_port = std::to_string(ntohs(addr4->sin_port));
 			}
@@ -194,6 +194,17 @@ void TCP::Close()
 	this->connected = false;
 }
 
+bool TCP::IsConnected()
+{
+	return this->connected;
+}
+
+std::vector<unsigned char> TCP::Recv(std::size_t bytes, std::function<void(std::size_t)> update)
+{
+	std::vector<unsigned char> data;
+	Recv(data, bytes, update);
+	return data;
+}
 void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::function<void(std::size_t)> updateCallback)
 {
 	//Improvement: use epoll
@@ -216,7 +227,7 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 		}
 
 		if (select_ret == SOCKET_ERROR) {
-			throw TCPException(SelectFailed);
+			throw TCPException(SelectFailed, "TCPError: SelectFailed!");
 		}
 		else if (select_ret) {
 			if (!(nonblocking) || FD_ISSET(this->sock, &rfds)) {
@@ -226,10 +237,10 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 				char *ptr = reinterpret_cast<char *>(&(*(data.end() - to_read_current)));
 				long long recv_ret = recv(this->sock, ptr, to_read_current, 0);
 				if (recv_ret == SOCKET_ERROR) {
-					throw TCPException(SendRecvFailed);
+					throw TCPException(SendRecvFailed, "TCPError: recv Failed!");
 				} else if (recv_ret == 0) {
 					data.resize(data.size() - to_read_current);
-					throw TCPException(ConnectionClosed);
+					throw TCPException(ConnectionClosed, "TCPError: Connection Closed!");
 				}
 
 				std::size_t read = static_cast<std::size_t>(recv_ret);
@@ -242,7 +253,7 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 			}
 		}
 		else {
-			throw TCPException(Timeout);
+			throw TCPException(Timeout, "TCPError: Timeout!");
 		}
 	}
 }
@@ -270,7 +281,7 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 		}
 
 		if (select_ret == SOCKET_ERROR) {
-			throw TCPException(SelectFailed);
+			throw TCPException(SelectFailed, "TCPError: SelectFailed!");
 		}
 		else if (select_ret) {
 			if (!(nonblocking) || FD_ISSET(this->sock, &sfds)) {
@@ -279,9 +290,9 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 				const char *ptr = reinterpret_cast<const char*>(&(*it));
 				long long send_ret = send(this->sock, ptr, to_write_current, 0);
 				if (send_ret == SOCKET_ERROR) {
-					throw TCPException(SendRecvFailed);
+					throw TCPException(SendRecvFailed, "TCPError: send Failed!");
 				} else if (send_ret == 0) {
-					throw TCPException(ConnectionClosed);
+					throw TCPException(ConnectionClosed, "TCPError: Connection Closed!");
 				}
 				
 				std::size_t write = static_cast<std::size_t>(send_ret);
@@ -294,7 +305,7 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 			}
 		}
 		else {
-			throw TCPException(Timeout);
+			throw TCPException(Timeout, "TCPError: Timeout!");
 		}
 	}
 }
@@ -323,7 +334,7 @@ TCP::TCP() : block_size(default_block_size), timeout(default_timeout), connected
 	// initialize winsock2
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-		throw(TCPException(PlatformSpecificError));
+		throw(TCPException(PlatformSpecificError, "TCPError: PlatformSpecificError!"));
 	}
 #endif
 }

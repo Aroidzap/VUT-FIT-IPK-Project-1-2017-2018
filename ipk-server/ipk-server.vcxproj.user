@@ -4,6 +4,31 @@
     <RemoteTarget>-371638387;localhost (username=, port=2222, authentication=Password)</RemoteTarget>
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
-    <RemoteDebuggerCommandArguments>-p 50000</RemoteDebuggerCommandArguments>
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
+    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

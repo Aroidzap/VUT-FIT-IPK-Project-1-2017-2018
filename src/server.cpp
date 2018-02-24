@@ -22,11 +22,10 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
-	//TODO: handle errors
+	// TODO: handle errors
 	IPKFTP ipkftp;
-	//ipkftp.ServerModeEnable(arguments.port);
-	//TODO: keep open
-	//ipkftp.ServerModeDisable();
+	ipkftp.ServerModeEnable(arguments.port); // infinite loop for now
+	ipkftp.ServerModeDisable(); // reserved for future
 
 	return 0;
 };

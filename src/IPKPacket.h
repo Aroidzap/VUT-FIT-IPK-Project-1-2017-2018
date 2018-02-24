@@ -30,11 +30,12 @@
 *
 * (0) RequestFile - requires filename
 * (1) OfferFile - requires filename and data
-* (2) StatusOk
-* (3) StatusError
-* (4) StatusFileAlreadyExists
-* (5) CommandOverwrite
-* (6) CommandCancelTransmission
+* (2) CommandPing
+* (3) StatusOk
+* (4) StatusError
+* (5) *reserved* StatusFileAlreadyExists
+* (6) *reserved* CommandOverwrite
+* (7) *reserved* CommandCancelTransmission
 *
 ******************************************/
 
@@ -45,12 +46,13 @@
 enum IPKTransmissionType {
 	RequestFile = 0,
 	OfferFile = 1,
-	StatusOk = 2,
-	StatusError = 3,
-	StatusFileAlreadyExists = 4,
-	CommandOverwrite = 5,
-	CommandCancelTransmission = 6,
-	Unknown = 7
+	CommandPing = 2,
+	StatusOk = 3,
+	StatusError = 4,
+	StatusFileAlreadyExists = 5,
+	CommandOverwrite = 6,
+	CommandCancelTransmission = 7,
+	IPKUnknown = 8
 };
 
 enum IPKPacketError {
@@ -78,12 +80,21 @@ public:
 	// Serialize
 	operator const std::vector<unsigned char>() const;
 
-	// Get Filename & Data
+	// Get Filename, Data, type
 	const std::string GetFilename() const;
 	const std::vector<unsigned char> GetData() const;
+	const IPKTransmissionType Type() const;
+
+	// Get type from incomplete serialized packet (min size == 8)
+	static IPKTransmissionType Type(const std::vector<unsigned char> message);
 
 	// Get expected size from incomplete serialized packet (min size == 16)
 	static std::size_t ExpectedSize(const std::vector<unsigned char> message);
+	static const std::size_t StatusSize;
+
+	// Comparison
+	bool operator==(const IPKTransmissionType t) const;
+	bool operator!=(const IPKTransmissionType t) const;
 };
 
 class IPKPacketException : public std::runtime_error {

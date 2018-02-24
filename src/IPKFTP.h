@@ -9,16 +9,18 @@
 
 #include <string>
 #include <vector>
+#include "TCP.h"
 
 class IPKFTP {
 	static const int retries;
-	bool connected;
-	bool FileExists(std::string filename);
-	std::vector<unsigned char> FileLoad(std::string filename);
-	void FileSave(std::string filename, std::vector<unsigned char> data);
+	TCP tcp;
+
+	static bool FileExists(std::string filename);
+	static std::vector<unsigned char> FileLoad(std::string filename);
+	static void FileSave(std::string filename, std::vector<unsigned char> data);
 public:
 	bool ServerModeEnable(std::string port);
-	void ServerModeDisable();
+	void ServerModeDisable() { } // reserved for future
 
 	bool ClientConnect(std::string host, std::string port);
 	void ClientDisconnect();

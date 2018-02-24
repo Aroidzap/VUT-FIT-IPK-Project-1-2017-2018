@@ -17,7 +17,7 @@ struct args {
 
 bool load_args(int argc, const char *argv[], args *arguments);
 
-/*int main(int argc, const char *argv[]) {
+int main(int argc, const char *argv[]) {
 	if (!load_args(argc, argv, &arguments)) {
 		std::cerr << client_usage << std::endl;
 		return -1;
@@ -35,20 +35,7 @@ bool load_args(int argc, const char *argv[], args *arguments);
 	ipkftp.ClientDisconnect();
 
 	return 0;
-};*/
-
-#include "TCP.h"
-int main() {
-	TCP tcp;
-	std::vector<unsigned char> buffer;
-	tcp.Listen("8080", [](auto client, auto ip, auto port) {
-		std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\n<html><head><title>Welcome!!!</title></head><body>Hi "+ip+':'+port+" from C++ server!!!</body></html>";
-		std::vector<unsigned char> data(response.begin(), response.end());
-		data.push_back(0);
-		client.Send(data);
-	});
-	tcp.Close();
-}
+};
 
 bool load_args(int argc, const char *argv[], args *arguments) {
 	bool host(false), port(false), mode(false);
