@@ -1,6 +1,6 @@
 /*
 *	IPK Project 1: client-server for simple file transfer
-*	Author: Tom� Pazdiora (xpazdi02)
+*	Author: Tomáš Pazdiora (xpazdi02)
 *	File: IPKFTP.h
 */
 
