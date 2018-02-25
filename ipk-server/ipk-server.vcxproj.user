@@ -6,16 +6,6 @@
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
-    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
-    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
-    <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
-    <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
-    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <RemoteDebuggerCommandArguments>-p 8080</RemoteDebuggerCommandArguments>
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
