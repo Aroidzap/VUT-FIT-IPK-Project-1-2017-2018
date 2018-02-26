@@ -8,8 +8,10 @@
 
 #include "IPKPacket.h"
 
+#include <iostream>
 #include <fstream>
 #include <iterator>
+#include <stdexcept>
 
 const int IPKFTP::retries = 3;
 
@@ -37,7 +39,7 @@ void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 
 bool IPKFTP::ServerModeEnable(std::string port)
 {
-	tcp.Listen(port, [](TCP client) 
+	tcp.Listen(port, [](TCP client) // TODO: enable termination, use threads
 	{
 		bool close = false;
 		while (!close) {
@@ -73,7 +75,7 @@ bool IPKFTP::ServerModeEnable(std::string port)
 				break;
 			}
 		}
-	}); // infinite loop
+	}); // infinite loop //TODO
 	return true;
 }
 
@@ -82,19 +84,36 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 	if (tcp.IsConnected()) {
 		tcp.Close();
 	}
-	try {
-		tcp.Connect(host, port);
-		tcp.Send(IPKPacket(CommandPing));
-		if (!(IPKPacket(tcp.Recv(IPKPacket::StatusSize)) == StatusOk)) {
-			tcp.Close();
-			return false;
+	for (int i = 1; i <= retries; i++) {
+		try {
+			tcp.Connect(host, port);
+			tcp.Send(IPKPacket(CommandPing));
+			if (IPKPacket(tcp.Recv(IPKPacket::StatusSize)) == StatusOk) {
+				return true;
+			}
+			else {
+				tcp.Close();
+				continue;
+			}
+		}
+		catch (const TCPException &e) {
+			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
+				if (i >= retries) throw e;
+			}
+			else {
+				throw e;
+			}
+		}
+		catch (const IPKPacketException &e) {
+			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError || 
+				e.error == SizeError || e.error == CRC32Error) {
+				if (i >= retries) throw e;
+			} else {
+				throw e;
+			}
 		}
 	}
-	catch (TCPError &e) {
-		throw e;
-		return false;
-	}
-	return true;
+	return false;
 }
 
 void IPKFTP::ClientDisconnect()
@@ -102,19 +121,44 @@ void IPKFTP::ClientDisconnect()
 	tcp.Close();
 }
 
-bool IPKFTP::Upload(std::string filename)
+bool IPKFTP::Upload(std::string filename) // TODO: NOW
 {
-	try {
-		tcp.Send(IPKPacket(OfferFile, filename, FileLoad(filename)));
-		if (!(IPKPacket(tcp.Recv(IPKPacket::StatusSize)) == StatusOk)) {
-			return false;
+	auto filedata = FileLoad(filename); // TODO: catch exception 
+
+	for (int i = 1; i <= retries; i++) {
+		try {
+			tcp.Send(IPKPacket(OfferFile, filename, filedata));
+			auto status = IPKPacket(tcp.Recv(IPKPacket::StatusSize));
+			if (status == StatusOk) {
+				return true;
+			} 
+			else {
+				continue;
+			}
+		}
+		catch (const TCPException &e) {
+			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
+				if (i >= retries) throw e;
+			}
+			else {
+				throw e;
+			}
+		}
+		catch (const IPKPacketException &e) {
+			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
+				e.error == SizeError || e.error == CRC32Error) {
+				if (i >= retries) throw e;
+			}
+			else if (e.error == PacketCreationError) {
+				std::cerr << e.what();
+				return false;
+			}
+			else {
+				throw e;
+			}
 		}
 	}
-	catch (TCPError &e) {
-		throw e;
-		return false;
-	}
-	return true;
+	return false;
 }
 
 bool IPKFTP::Download(std::string filename)
@@ -123,11 +167,11 @@ bool IPKFTP::Download(std::string filename)
 		tcp.Send(IPKPacket(RequestFile, filename));
 		auto packet = tcp.Recv(IPKPacket::StatusSize);
 		tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
-		IPKPacket p(packet); //TODO: test filename == p.GetFilename()
-		FileSave(p.GetFilename(), p.GetData());
+		IPKPacket p(packet); //TODO: test filename == p.GetFilename() throw runtime exception, retry
+		FileSave(p.GetFilename(), p.GetData());  // TODO: catch exception 
 		tcp.Send(IPKPacket(StatusOk));
 	}
-	catch (TCPError &e) {
+	catch (const TCPException &e) {
 		throw e;
 		return false;
 	}
