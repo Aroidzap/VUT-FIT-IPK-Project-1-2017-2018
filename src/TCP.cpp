@@ -207,7 +207,7 @@ std::vector<unsigned char> TCP::Recv(std::size_t bytes, std::function<void(std::
 }
 void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::function<void(std::size_t)> updateCallback)
 {
-	//Improvement: use epoll
+	//Possible Improvement: use epoll
 	fd_set rfds;
 	timeval time_out;
 
@@ -260,7 +260,7 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 
 void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::size_t)> updateCallback)
 {
-	//Improvement: use epoll
+	//Possible Improvement: use epoll
 	fd_set sfds;
 	timeval time_out;
 

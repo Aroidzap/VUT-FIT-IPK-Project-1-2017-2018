@@ -37,15 +37,16 @@ enum TCPError {
 };
 
 class TCP {
-	static const int maxconnections;
-	static const bool nonblocking;
-	const std::size_t block_size;
-	const int timeout;
+	static const int maxconnections; // maximal simultaneous connections
+	static const bool nonblocking; // use nonblocking sockets
+	const std::size_t block_size; // maximal recv/send block size
+	const int timeout; // connection timeout
 
 	bool connected;
 	TCPSocket sock;
 
 	bool moved;
+	
 	bool setNonBlocking(TCPSocket socket);
 
 public:
@@ -55,18 +56,24 @@ public:
 	TCP(TCP && other);
 	~TCP();
 
+	// connect to specific host and port
 	void Connect(std::string host, std::string port);
 
-	void Listen(std::string port, std::function<void(TCP)> clientConnectionHandler, std::string host = {}); // host == specific interface
-	void Listen(std::string port, std::function<void(TCP, const std::string, const std::string)> clientConnectionHandler, std::string host = {}); // host == specific interface
+	// listen on specific port and optionally on specefic interface (host)
+	void Listen(std::string port, std::function<void(TCP)> clientConnectionHandler, std::string host = {});
+	void Listen(std::string port, std::function<void(TCP, const std::string, const std::string)> clientConnectionHandler, std::string host = {});
 
+	// close connection
 	void Close();
 
+	// check connection
 	bool IsConnected();
+
 
 	// blocking recv with timeout and periodical update callback
 	std::vector<unsigned char> Recv(std::size_t bytes, std::function<void(std::size_t)> update = {});
 	void Recv(std::vector<unsigned char> &data, std::size_t bytes, std::function<void(std::size_t)> update = {});
+
 	// blocking send with timeout and periodical update callback
 	void Send(const std::vector<unsigned char> &data, std::function<void(std::size_t)> update = {});
 };

@@ -39,6 +39,9 @@ void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 
 bool IPKFTP::ServerModeEnable(std::string port)
 {
+	//Possible Improvement: std::cout logging
+	//Possible Improvement: split large files
+
 	tcp.Listen(port, [](TCP client) // TODO: enable termination, use threads
 	{
 		bool close = false;
@@ -81,6 +84,7 @@ bool IPKFTP::ServerModeEnable(std::string port)
 
 bool IPKFTP::ClientConnect(std::string host, std::string port)
 {
+	//Possible Improvement: std::cout logging
 	if (tcp.IsConnected()) {
 		tcp.Close();
 	}
@@ -98,18 +102,18 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 		}
 		catch (const TCPException &e) {
 			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
-				if (i >= retries) throw e;
+				if (i >= retries) throw;
 			}
 			else {
-				throw e;
+				throw;
 			}
 		}
 		catch (const IPKPacketException &e) {
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError || 
 				e.error == SizeError || e.error == CRC32Error) {
-				if (i >= retries) throw e;
+				if (i >= retries) throw;
 			} else {
-				throw e;
+				throw;
 			}
 		}
 	}
@@ -123,6 +127,9 @@ void IPKFTP::ClientDisconnect()
 
 bool IPKFTP::Upload(std::string filename) // TODO: NOW
 {
+	//Possible Improvement: std::cout logging
+	//Possible Improvement: split large files
+
 	auto filedata = FileLoad(filename); // TODO: catch exception 
 
 	for (int i = 1; i <= retries; i++) {
@@ -138,23 +145,23 @@ bool IPKFTP::Upload(std::string filename) // TODO: NOW
 		}
 		catch (const TCPException &e) {
 			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
-				if (i >= retries) throw e;
+				if (i >= retries) throw;
 			}
 			else {
-				throw e;
+				throw;
 			}
 		}
 		catch (const IPKPacketException &e) {
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
 				e.error == SizeError || e.error == CRC32Error) {
-				if (i >= retries) throw e;
+				if (i >= retries) throw;
 			}
 			else if (e.error == PacketCreationError) {
 				std::cerr << e.what();
 				return false;
 			}
 			else {
-				throw e;
+				throw;
 			}
 		}
 	}
@@ -163,6 +170,8 @@ bool IPKFTP::Upload(std::string filename) // TODO: NOW
 
 bool IPKFTP::Download(std::string filename)
 {
+	//Possible Improvement: std::cout logging
+	//Possible Improvement: split large files
 	try {
 		tcp.Send(IPKPacket(RequestFile, filename));
 		auto packet = tcp.Recv(IPKPacket::StatusSize);
@@ -172,7 +181,7 @@ bool IPKFTP::Download(std::string filename)
 		tcp.Send(IPKPacket(StatusOk));
 	}
 	catch (const TCPException &e) {
-		throw e;
+		throw;
 		return false;
 	}
 	return true;

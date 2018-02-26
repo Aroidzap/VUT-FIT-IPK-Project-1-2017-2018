@@ -10,6 +10,8 @@
 #include <vector>
 #include <stdint.h>
 
+// Compute CRC32 of given data
+const uint32_t crc32_polynomial = 0x04C11DB7;
 uint32_t CRC32(const std::vector<unsigned char>::const_iterator begin, const std::vector<unsigned char>::const_iterator end);
 
 #endif

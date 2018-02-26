@@ -112,21 +112,25 @@ IPKPacket::operator const std::vector<unsigned char>() const
 	return message;
 }
 
+// get filename from packet
 const std::string IPKPacket::GetFilename() const
 {
 	return this->filename;
 }
 
+// get file data from packet
 const std::vector<unsigned char> IPKPacket::GetData() const
 {
 	return this->data;
 }
 
+// get transmission type of packet
 const IPKTransmissionType IPKPacket::Type() const
 {
 	return this->type;
 }
 
+// Get type from incomplete serialized packet (min size == 8)
 IPKTransmissionType IPKPacket::Type(const std::vector<unsigned char> message)
 {
 	// check if it's possible to get size
@@ -144,6 +148,7 @@ IPKTransmissionType IPKPacket::Type(const std::vector<unsigned char> message)
 	return static_cast<IPKTransmissionType>(*(message.begin() + 0x7));
 }
 
+// Get expected size from incomplete serialized packet (min size == 16)
 std::size_t IPKPacket::ExpectedSize(const std::vector<unsigned char> message)
 {
 	// check if it's possible to get size
@@ -162,11 +167,13 @@ std::size_t IPKPacket::ExpectedSize(const std::vector<unsigned char> message)
 	return overall_size;
 }
 
+// compare packet with transmission type
 bool IPKPacket::operator==(const IPKTransmissionType t) const
 {
 	return this->type == t;
 }
 
+// compare packet with transmission type
 bool IPKPacket::operator!=(const IPKTransmissionType t) const
 {
 	return this->type != t;

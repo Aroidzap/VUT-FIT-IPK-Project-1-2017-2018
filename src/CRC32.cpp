@@ -9,7 +9,7 @@
 
 // C++14 (extended constexpr) required !!!
 
-static constexpr uint32_t polynomial = 0x04C11DB7;
+static constexpr uint32_t polynomial = crc32_polynomial;
 
 struct CRC32LUT
 {
@@ -26,6 +26,7 @@ struct CRC32LUT
 	}
 };
 
+// bit reversal
 static constexpr uint32_t bit_reverse(const uint32_t x) {
 	uint32_t reversed{ 0 };
 	for (uint32_t i = 0; i < 32; i++) {
@@ -34,6 +35,7 @@ static constexpr uint32_t bit_reverse(const uint32_t x) {
 	return reversed;
 }
 
+// function for compiling CRC32 lookup table (256 entries)
 static constexpr CRC32LUT crc32lut_compile(const uint32_t polynomial)
 {
 	CRC32LUT lut{};
@@ -51,7 +53,7 @@ static constexpr CRC32LUT crc32lut_compile(const uint32_t polynomial)
 	return lut;
 }
 
-// lookup table (256 entries)
+// CRC32 lookup table (256 entries)
 static constexpr CRC32LUT crc32lut{ crc32lut_compile(polynomial) };
 
 // CRC32 with lookup table
