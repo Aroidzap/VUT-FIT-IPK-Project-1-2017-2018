@@ -24,7 +24,9 @@ std::vector<unsigned char> IPKFTP::FileLoad(std::string filename)
 {
 	std::vector<unsigned char> data;
 	std::ifstream file(filename, std::ios::binary);
-
+	if (file.bad()) {
+		std::runtime_error("std::ifstream: Unable to load file.");
+	}
 	std::copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), std::back_inserter(data));
 
 	return data;
@@ -33,7 +35,9 @@ std::vector<unsigned char> IPKFTP::FileLoad(std::string filename)
 void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 {
 	std::ofstream file(filename, std::ios::binary);
-
+	if (file.bad()) {
+		std::runtime_error("std::ofstream: Unable to save file.");
+	}
 	std::copy(std::begin(data), std::end(data), std::ostreambuf_iterator<char>(file));
 }
 
@@ -80,6 +84,11 @@ bool IPKFTP::ServerModeEnable(std::string port)
 		}
 	}); // infinite loop //TODO
 	return true;
+}
+
+void IPKFTP::ServerModeDisable()
+{
+	//TODO:
 }
 
 bool IPKFTP::ClientConnect(std::string host, std::string port)
@@ -130,7 +139,7 @@ bool IPKFTP::Upload(std::string filename) // TODO: NOW
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
 
-	auto filedata = FileLoad(filename); // TODO: catch exception 
+	auto filedata = FileLoad(filename);
 
 	for (int i = 1; i <= retries; i++) {
 		try {

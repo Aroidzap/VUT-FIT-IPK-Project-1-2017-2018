@@ -20,7 +20,7 @@ class IPKFTP {
 	static void FileSave(std::string filename, std::vector<unsigned char> data);
 public:
 	bool ServerModeEnable(std::string port);
-	void ServerModeDisable() { } // reserved for future
+	void ServerModeDisable();
 
 	bool ClientConnect(std::string host, std::string port);
 	void ClientDisconnect();
