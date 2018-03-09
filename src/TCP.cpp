@@ -10,7 +10,7 @@
 #include <algorithm>
 
 // Linux specific
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,7 +24,7 @@
 #endif
 
 // Windows specific
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <ws2tcpip.h>
 #undef min
 
@@ -131,10 +131,9 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 				break;
 			}
 			else {
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 				bool addr_port_in_use = (errno == EADDRINUSE);
-#endif
-#ifdef _WIN32
+#elif defined(_WIN32)
 				bool addr_port_in_use = (WSAGetLastError() == WSAEADDRINUSE);
 #endif
 				close(this->sock);
@@ -312,7 +311,7 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 
 bool TCP::setNonBlocking(TCPSocket socket)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 	int flags;
 	if ((flags = fcntl(socket, F_GETFL, 0)) < 0) {
 		return false;
@@ -321,8 +320,7 @@ bool TCP::setNonBlocking(TCPSocket socket)
 		return false;
 	}
 	return true;
-#endif
-#ifdef _WIN32
+#elif defined(_WIN32)
 	unsigned long mode{1UL};
 	return (ioctlsocket(socket, FIONBIO, &mode) == 0);
 #endif
@@ -330,7 +328,7 @@ bool TCP::setNonBlocking(TCPSocket socket)
 
 
 TCP::TCP() : block_size(default_block_size), timeout(default_timeout), connected(false), sock(INVALID_SOCKET), moved(false) {
-#ifdef _WIN32
+#if defined(_WIN32)
 	// initialize winsock2
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -355,7 +353,7 @@ TCP::~TCP()
 	if (this->connected) {
 		Close();
 	}
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (!this->moved) {
 		WSACleanup(); // winsock2 cleanup
 	}

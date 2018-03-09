@@ -13,12 +13,12 @@
 #include <vector>
 
 // Linux specific
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 using TCPSocket = int;
 #endif
 
 // Windows specific
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <winsock2.h> //requires ws2_32.lib
 using TCPSocket = SOCKET;
 #endif

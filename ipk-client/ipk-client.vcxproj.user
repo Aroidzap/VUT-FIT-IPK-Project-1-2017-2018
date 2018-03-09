@@ -10,15 +10,18 @@
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>-h localhost -p 8080 -r test</RemoteDebuggerCommandArguments>
+    <RemoteTarget>-371638387;localhost (username=, port=2222, authentication=Password)</RemoteTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>-h localhost -p 8080 -r test</RemoteDebuggerCommandArguments>
+    <RemoteTarget>-371638387;localhost (username=, port=2222, authentication=Password)</RemoteTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <RemoteDebuggingMode>gdbserver</RemoteDebuggingMode>
     <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
     <RemoteDebuggerCommandArguments>-h localhost -p 8080 -r test</RemoteDebuggerCommandArguments>
+    <RemoteTarget>-371638387;localhost (username=, port=2222, authentication=Password)</RemoteTarget>
   </PropertyGroup>
 </Project>

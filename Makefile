@@ -1,6 +1,6 @@
 CXX = g++
 CPPFLAGS = -std=c++14
-LDFLAGS =
+LDFLAGS = -pthread
 
 SRCDIR = src
 OBJDIR = obj

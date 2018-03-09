@@ -18,9 +18,11 @@ class IPKFTP {
 	static bool FileExists(std::string filename);
 	static std::vector<unsigned char> FileLoad(std::string filename);
 	static void FileSave(std::string filename, std::vector<unsigned char> data);
+
+	static void ServerThreadCode(TCP &client);
 public:
-	bool ServerModeEnable(std::string port);
-	void ServerModeDisable();
+	bool ServerStart(std::string port);
+	void ServerStop();
 
 	bool ClientConnect(std::string host, std::string port);
 	void ClientDisconnect();

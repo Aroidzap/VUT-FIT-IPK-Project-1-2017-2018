@@ -12,8 +12,11 @@
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
+#include <thread>
 
 const int IPKFTP::retries = 3;
+
+// -------------- File Methods --------------
 
 bool IPKFTP::FileExists(std::string filename)
 {
@@ -41,54 +44,74 @@ void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 	std::copy(std::begin(data), std::end(data), std::ostreambuf_iterator<char>(file));
 }
 
-bool IPKFTP::ServerModeEnable(std::string port)
+// ------------------------------------------
+
+bool IPKFTP::ServerStart(std::string port)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
 
-	tcp.Listen(port, [](TCP client) // TODO: enable termination, use threads
-	{
-		bool close = false;
-		while (!close) {
-			std::vector<unsigned char> packet{};
-			switch (IPKPacket::Type(packet = client.Recv(IPKPacket::StatusSize))) {
-			case CommandPing:
-			{
-				client.Send(IPKPacket(StatusOk));
-				break;
-			}
-			case OfferFile:
-			{
-				client.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
-				IPKPacket p(packet);
-				FileSave(p.GetFilename(), p.GetData());
-				client.Send(IPKPacket(StatusOk));
-				close = true;
-				break;
-			}
-			case RequestFile:
-			{
-				client.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
-				auto filename = IPKPacket(packet).GetFilename();
-				auto data = FileLoad(filename);
-				client.Send(IPKPacket(OfferFile, filename, FileLoad(filename)));
-				if (!(IPKPacket(client.Recv(IPKPacket::StatusSize)) == StatusOk)) {
-					//TODO: retry
-				}
-				close = true;
-				break;
-			}
-			default:
-				break;
-			}
-		}
-	}); // infinite loop //TODO
+	// Possible TODO: enable termination of server other thag 
+	tcp.Listen(port, [](TCP client) {
+		std::thread thread([](TCP &client) {
+			ServerThreadCode(client);
+		}, std::ref(client));
+		thread.detach(); //detach thread to be ready to accept another client
+	}); // infinite loop 
+
 	return true;
 }
 
-void IPKFTP::ServerModeDisable()
+void IPKFTP::ServerThreadCode(TCP &client) {
+	for (int i = 1; i <= retries; i++) {
+		try {
+			bool close = false;
+			while (!close) {
+				std::vector<unsigned char> packet{};
+				switch (IPKPacket::Type(packet = client.Recv(IPKPacket::StatusSize))) {
+				case CommandPing:
+				{
+					client.Send(IPKPacket(StatusOk));
+					break;
+				}
+				case OfferFile:
+				{
+					client.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
+					IPKPacket p(packet);
+					FileSave(p.GetFilename(), p.GetData());
+					client.Send(IPKPacket(StatusOk));
+					close = true;
+					break;
+				}
+				case RequestFile:
+				{
+					client.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
+					auto filename = IPKPacket(packet).GetFilename();
+					auto data = FileLoad(filename);
+					client.Send(IPKPacket(OfferFile, filename, FileLoad(filename)));
+					if (!(IPKPacket(client.Recv(IPKPacket::StatusSize)) == StatusOk)) {
+						//TODO: retry
+					}
+					close = true;
+					break;
+				}
+				default:
+					break;
+				}
+			}
+		}
+		catch (const TCPException &e) {
+			throw;
+		}
+		catch (const IPKPacketException &e) {
+			throw;
+		}
+	}
+}
+
+void IPKFTP::ServerStop()
 {
-	//TODO:
+	//not needed for now, since server starts an infinite loop
 }
 
 bool IPKFTP::ClientConnect(std::string host, std::string port)
@@ -129,17 +152,17 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 	return false;
 }
 
-void IPKFTP::ClientDisconnect()
-{
-	tcp.Close();
-}
-
-bool IPKFTP::Upload(std::string filename) // TODO: NOW
+bool IPKFTP::Upload(std::string filename)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
-
-	auto filedata = FileLoad(filename);
+	
+	std::vector<unsigned char> filedata;
+	try {
+		filedata = FileLoad(filename);
+	} catch (const std::runtime_error &e) {
+		throw; //TODO
+	}
 
 	for (int i = 1; i <= retries; i++) {
 		try {
@@ -186,6 +209,7 @@ bool IPKFTP::Download(std::string filename)
 		auto packet = tcp.Recv(IPKPacket::StatusSize);
 		tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
 		IPKPacket p(packet); //TODO: test filename == p.GetFilename() throw runtime exception, retry
+		if (p.Type() != OfferFile) { return false; }
 		FileSave(p.GetFilename(), p.GetData());  // TODO: catch exception 
 		tcp.Send(IPKPacket(StatusOk));
 	}
@@ -194,6 +218,11 @@ bool IPKFTP::Download(std::string filename)
 		return false;
 	}
 	return true;
+}
+
+void IPKFTP::ClientDisconnect()
+{
+	tcp.Close();
 }
 
 bool IPKFTP::Upload(std::string host, std::string port, std::string filename)
