@@ -1,5 +1,5 @@
 CXX = g++
-CPPFLAGS = -std=c++14
+CPPFLAGS = -std=c++14 -Wall -O3 -D NDEBUG -fthreadsafe-statics
 LDFLAGS = -pthread
 
 SRCDIR = src

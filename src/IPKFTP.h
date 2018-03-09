@@ -15,6 +15,8 @@ class IPKFTP {
 	static const int retries;
 	TCP tcp;
 
+	static void ShowProgress(std::size_t bytes, std::size_t max);
+
 	static std::vector<unsigned char> FileLoad(std::string filename);
 	static void FileSave(std::string filename, std::vector<unsigned char> data);
 

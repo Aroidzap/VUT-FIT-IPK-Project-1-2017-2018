@@ -198,13 +198,13 @@ bool TCP::IsConnected()
 	return this->connected;
 }
 
-std::vector<unsigned char> TCP::Recv(std::size_t bytes, std::function<void(std::size_t)> update)
+std::vector<unsigned char> TCP::Recv(std::size_t bytes, std::function<void(std::size_t, std::size_t)> update)
 {
 	std::vector<unsigned char> data;
 	Recv(data, bytes, update);
 	return data;
 }
-void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::function<void(std::size_t)> updateCallback)
+void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::function<void(std::size_t, std::size_t)> updateCallback)
 {
 	//Possible Improvement: use epoll
 	fd_set rfds;
@@ -247,7 +247,7 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 				to_read -= read;
 
 				if (updateCallback) {
-					updateCallback(bytes - to_read); //call optional update callback
+					updateCallback(bytes - to_read, bytes); //call optional update callback
 				}
 			}
 		}
@@ -257,7 +257,7 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 	}
 }
 
-void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::size_t)> updateCallback)
+void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::size_t, std::size_t)> updateCallback)
 {
 	//Possible Improvement: use epoll
 	fd_set sfds;
@@ -299,7 +299,7 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 				to_write -= write;
 				
 				if (updateCallback) {
-					updateCallback(data.size() - to_write); //call optional update callback
+					updateCallback(data.size() - to_write, data.size()); //call optional update callback
 				}
 			}
 		}

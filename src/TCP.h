@@ -71,11 +71,11 @@ public:
 
 
 	// blocking recv with timeout and periodical update callback
-	std::vector<unsigned char> Recv(std::size_t bytes, std::function<void(std::size_t)> update = {});
-	void Recv(std::vector<unsigned char> &data, std::size_t bytes, std::function<void(std::size_t)> update = {});
+	std::vector<unsigned char> Recv(std::size_t bytes, std::function<void(std::size_t, std::size_t)> update = {});
+	void Recv(std::vector<unsigned char> &data, std::size_t bytes, std::function<void(std::size_t, std::size_t)> update = {});
 
 	// blocking send with timeout and periodical update callback
-	void Send(const std::vector<unsigned char> &data, std::function<void(std::size_t)> update = {});
+	void Send(const std::vector<unsigned char> &data, std::function<void(std::size_t, std::size_t)> update = {});
 };
 
 class TCPException : public std::runtime_error {

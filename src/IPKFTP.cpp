@@ -12,9 +12,30 @@
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
+
 #include <thread>
 
+#include <chrono>
+#include <iomanip>
+
 const int IPKFTP::retries = 2; // total number of tries = 1 + retries
+
+
+// ----------------- Utils ------------------
+
+void IPKFTP::ShowProgress(std::size_t bytes, std::size_t max)
+{
+	static auto timer = std::chrono::system_clock::now();
+	auto dt = std::chrono::system_clock::now() - timer;
+	if (std::chrono::duration_cast<std::chrono::milliseconds>(dt).count() > 100 || bytes == max) 
+	{
+		// update every 100ms
+		std::cout << '\r' << bytes << " bytes | ";
+		std::cout << std::setprecision(1) << std::fixed;
+		std::cout << (static_cast<float>(bytes) / max) * 100.f << '%';
+		timer = std::chrono::system_clock::now();
+	}
+}
 
 // -------------- File Methods --------------
 
@@ -52,6 +73,7 @@ void IPKFTP::ServerStart(std::string port)
 
 void IPKFTP::ServerThreadCode(TCP &&client) {
 	for (int i = 0; i <= retries; i++) {
+		IPKTransmissionType send_error = IPKUnknown;
 		try {
 			bool close = false;
 			while (!close) { // loop until client closes connection, or until (1 + retries) * timeout
@@ -79,16 +101,16 @@ void IPKFTP::ServerThreadCode(TCP &&client) {
 					break;
 				}
 				default:
-					client.Send(IPKPacket(StatusError));
+					send_error = StatusError; // Send ERROR response
 					break;
 				}
 			}
 		}
 		catch (const TCPException &e) {
 			if (e.error == Timeout) {
-				client.Send(IPKPacket(StatusError));
+				send_error = StatusError; // Send ERROR response
 			}
-			else if (e.error == ConnectionClosed) {
+			else if (e.error == ConnectionClosed || e.error == SendRecvFailed) {
 				break; //close connection
 			}
 			else {
@@ -98,7 +120,7 @@ void IPKFTP::ServerThreadCode(TCP &&client) {
 		catch (const IPKPacketException &e) {
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
 				e.error == SizeError || e.error == CRC32Error) {
-				client.Send(IPKPacket(StatusError));
+				send_error = StatusError; // Send ERROR response
 			}
 			else {
 				throw;
@@ -106,11 +128,28 @@ void IPKFTP::ServerThreadCode(TCP &&client) {
 		}
 		catch (const std::fstream::failure &e) {
 			(void)e; // bypass unreferenced local variable warning
-			client.Send(IPKPacket(StatusInaccessible));
-			break; //close connection
+			send_error = StatusInaccessible; // Send ERROR response
+		}
+
+		// ----- Try to send ERROR response -----
+		try {
+			if (send_error == StatusError) {
+				//client.Send(IPKPacket(StatusError));
+			}
+			else if (send_error == StatusInaccessible) {
+				//client.Send(IPKPacket(StatusInaccessible));
+				break; //close connection
+			}
+		}
+		catch (const TCPException &e) {
+			if (e.error == ConnectionClosed || e.error == SendRecvFailed) {
+				break; //close connection
+			}
+			else {
+				throw;
+			}
 		}
 	}
-	client.Close();
 }
 
 void IPKFTP::ServerStop()
@@ -167,7 +206,7 @@ void IPKFTP::Upload(std::string filename)
 	
 	for (int i = 0; i <= retries; i++) {
 		try {
-			tcp.Send(IPKPacket(OfferFile, filename, filedata));
+			tcp.Send(IPKPacket(OfferFile, filename, filedata), ShowProgress);
 			IPKPacket p(tcp.Recv(IPKPacket::StatusSize));
 			if (p == StatusOk) {
 				return;
@@ -209,7 +248,7 @@ void IPKFTP::Download(std::string filename)
 		try {
 			tcp.Send(IPKPacket(RequestFile, filename));
 			auto packet = tcp.Recv(IPKPacket::StatusSize);
-			tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
+			tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize, ShowProgress);
 			IPKPacket p(packet);
 			if (p == StatusInaccessible) {
 				throw std::runtime_error("Error: File is not accessible on server!");
