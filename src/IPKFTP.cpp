@@ -14,33 +14,25 @@
 #include <stdexcept>
 #include <thread>
 
-const int IPKFTP::retries = 3;
+const int IPKFTP::retries = 2; // total number of tries = 1 + retries
 
 // -------------- File Methods --------------
-
-bool IPKFTP::FileExists(std::string filename)
-{
-	return std::ifstream(filename).good();
-}
 
 std::vector<unsigned char> IPKFTP::FileLoad(std::string filename)
 {
 	std::vector<unsigned char> data;
-	std::ifstream file(filename, std::ios::binary);
-	if (file.bad()) {
-		std::runtime_error("std::ifstream: Unable to load file.");
-	}
+	std::ifstream file;
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	file.open(filename, std::ios::binary);
 	std::copy(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), std::back_inserter(data));
-
 	return data;
 }
 
 void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 {
-	std::ofstream file(filename, std::ios::binary);
-	if (file.bad()) {
-		std::runtime_error("std::ofstream: Unable to save file.");
-	}
+	std::ofstream file;
+	file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+	file.open(filename, std::ios::binary);
 	std::copy(std::begin(data), std::end(data), std::ostreambuf_iterator<char>(file));
 }
 
@@ -50,23 +42,21 @@ bool IPKFTP::ServerStart(std::string port)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
+	//Possible Improvement: enable termination of server using stdin
 
-	// Possible TODO: enable termination of server other thag 
 	tcp.Listen(port, [](TCP client) {
-		std::thread thread([](TCP &client) {
-			ServerThreadCode(client);
-		}, std::ref(client));
-		thread.detach(); //detach thread to be ready to accept another client
+		std::thread thread(ServerThreadCode, std::ref(client));
+		thread.detach(); //detach thread to be ready to accept another client without blocking
 	}); // infinite loop 
 
 	return true;
 }
 
 void IPKFTP::ServerThreadCode(TCP &client) {
-	for (int i = 1; i <= retries; i++) {
+	for (int i = 0; i <= retries; i++) {
 		try {
 			bool close = false;
-			while (!close) {
+			while (!close) { // loop until client closes connection, or until (1 + retries) * timeout
 				std::vector<unsigned char> packet{};
 				switch (IPKPacket::Type(packet = client.Recv(IPKPacket::StatusSize))) {
 				case CommandPing:
@@ -80,7 +70,6 @@ void IPKFTP::ServerThreadCode(TCP &client) {
 					IPKPacket p(packet);
 					FileSave(p.GetFilename(), p.GetData());
 					client.Send(IPKPacket(StatusOk));
-					close = true;
 					break;
 				}
 				case RequestFile:
@@ -88,25 +77,42 @@ void IPKFTP::ServerThreadCode(TCP &client) {
 					client.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
 					auto filename = IPKPacket(packet).GetFilename();
 					auto data = FileLoad(filename);
-					client.Send(IPKPacket(OfferFile, filename, FileLoad(filename)));
-					if (!(IPKPacket(client.Recv(IPKPacket::StatusSize)) == StatusOk)) {
-						//TODO: retry
-					}
-					close = true;
+					client.Send(IPKPacket(OfferFile, filename, data));
 					break;
 				}
 				default:
+					client.Send(IPKPacket(StatusError));
 					break;
 				}
 			}
 		}
 		catch (const TCPException &e) {
-			throw;
+			if (e.error == Timeout) {
+				client.Send(IPKPacket(StatusError));
+			}
+			else if (e.error == ConnectionClosed) {
+				break; //close connection
+			}
+			else {
+				throw;
+			}
 		}
 		catch (const IPKPacketException &e) {
-			throw;
+			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
+				e.error == SizeError || e.error == CRC32Error) {
+				client.Send(IPKPacket(StatusError));
+			}
+			else {
+				throw;
+			}
+		}
+		catch (const std::fstream::failure &e) {
+			(void)e; // bypass unreferenced local variable warning
+			client.Send(IPKPacket(StatusInaccessible));
+			break; //close connection
 		}
 	}
+	client.Close();
 }
 
 void IPKFTP::ServerStop()
@@ -120,7 +126,7 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 	if (tcp.IsConnected()) {
 		tcp.Close();
 	}
-	for (int i = 1; i <= retries; i++) {
+	for (int i = 0; i <= retries; i++) {
 		try {
 			tcp.Connect(host, port);
 			tcp.Send(IPKPacket(CommandPing));
@@ -134,7 +140,7 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 		}
 		catch (const TCPException &e) {
 			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
-				if (i >= retries) throw;
+				tcp.Close();
 			}
 			else {
 				throw;
@@ -143,7 +149,7 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 		catch (const IPKPacketException &e) {
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError || 
 				e.error == SizeError || e.error == CRC32Error) {
-				if (i >= retries) throw;
+				tcp.Close();
 			} else {
 				throw;
 			}
@@ -156,19 +162,13 @@ bool IPKFTP::Upload(std::string filename)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
-	
-	std::vector<unsigned char> filedata;
-	try {
-		filedata = FileLoad(filename);
-	} catch (const std::runtime_error &e) {
-		throw; //TODO
-	}
 
-	for (int i = 1; i <= retries; i++) {
+	auto filedata = FileLoad(filename);
+	
+	for (int i = 0; i <= retries; i++) {
 		try {
 			tcp.Send(IPKPacket(OfferFile, filename, filedata));
-			auto status = IPKPacket(tcp.Recv(IPKPacket::StatusSize));
-			if (status == StatusOk) {
+			if (IPKPacket(tcp.Recv(IPKPacket::StatusSize)).Type() == StatusOk) {
 				return true;
 			} 
 			else {
@@ -176,8 +176,8 @@ bool IPKFTP::Upload(std::string filename)
 			}
 		}
 		catch (const TCPException &e) {
-			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
-				if (i >= retries) throw;
+			if (e.error == Timeout) {
+				continue;
 			}
 			else {
 				throw;
@@ -186,11 +186,7 @@ bool IPKFTP::Upload(std::string filename)
 		catch (const IPKPacketException &e) {
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
 				e.error == SizeError || e.error == CRC32Error) {
-				if (i >= retries) throw;
-			}
-			else if (e.error == PacketCreationError) {
-				std::cerr << e.what();
-				return false;
+				continue;
 			}
 			else {
 				throw;
@@ -204,39 +200,41 @@ bool IPKFTP::Download(std::string filename)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
-	try {
-		tcp.Send(IPKPacket(RequestFile, filename));
-		auto packet = tcp.Recv(IPKPacket::StatusSize);
-		tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
-		IPKPacket p(packet); //TODO: test filename == p.GetFilename() throw runtime exception, retry
-		if (p.Type() != OfferFile) { return false; }
-		FileSave(p.GetFilename(), p.GetData());  // TODO: catch exception 
-		tcp.Send(IPKPacket(StatusOk));
+
+	for (int i = 0; i <= retries; i++) {
+		try {
+			tcp.Send(IPKPacket(RequestFile, filename));
+			auto packet = tcp.Recv(IPKPacket::StatusSize);
+			tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
+			IPKPacket p(packet);
+			if (p.Type() != OfferFile || p.GetFilename() != filename) { 
+				continue; 
+			}
+			FileSave(p.GetFilename(), p.GetData());
+			return true;
+		}
+		catch (const TCPException &e) {
+			if (e.error == Timeout) {
+				continue;
+			}
+			else {
+				throw;
+			}
+		}
+		catch (const IPKPacketException &e) {
+			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError ||
+				e.error == SizeError || e.error == CRC32Error) {
+				continue;
+			}
+			else {
+				throw;
+			}
+		}
 	}
-	catch (const TCPException &e) {
-		throw;
-		return false;
-	}
-	return true;
+	return false;
 }
 
 void IPKFTP::ClientDisconnect()
 {
 	tcp.Close();
-}
-
-bool IPKFTP::Upload(std::string host, std::string port, std::string filename)
-{
-	ClientConnect(host, port);
-	auto ret = Upload(filename);
-	ClientDisconnect();
-	return ret;
-}
-
-bool IPKFTP::Download(std::string host, std::string port, std::string filename)
-{
-	ClientConnect(host, port);
-	auto ret = Download(filename);
-	ClientDisconnect();
-	return ret;
 }

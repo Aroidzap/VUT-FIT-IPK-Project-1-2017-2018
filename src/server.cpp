@@ -16,16 +16,21 @@ struct args {
 
 bool load_args(int argc, const char *argv[], args *arguments);
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char *argv[]) 
+{
 	if (!load_args(argc, argv, &arguments)) {
 		std::cerr << server_usage << std::endl;
 		return -1;
 	}
 
-	// TODO: handle errors
-	IPKFTP ipkftp;
-	ipkftp.ServerStart(arguments.port); // infinite loop for now
-	ipkftp.ServerStop(); // reserved for future
+	try {
+		IPKFTP ipkftp;
+		ipkftp.ServerStart(arguments.port); // infinite loop for now
+		ipkftp.ServerStop(); // reserved for future
+	}
+	catch (const std::exception &e){
+		std::cerr << e.what() << std::endl;
+	}
 
 	return 0;
 };

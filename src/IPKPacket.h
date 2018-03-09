@@ -33,10 +33,7 @@
 * (2) CommandPing
 * (3) StatusOk
 * (4) StatusError
-* (5) *reserved* StatusFileBusy
-* (6) *reserved* StatusFileAlreadyExists
-* (7) *reserved* CommandOverwrite
-* (8) *reserved* CommandCancelTransmission
+* (5) StatusInaccessible
 *
 ******************************************/
 
@@ -50,11 +47,8 @@ enum IPKTransmissionType {
 	CommandPing = 2,
 	StatusOk = 3,
 	StatusError = 4,
-	/*reserved*/ StatusFileBusy = 5,
-	/*reserved*/ StatusFileAlreadyExists = 6,
-	/*reserved*/ CommandOverwrite = 7,
-	/*reserved*/ CommandCancelTransmission = 8,
-	IPKUnknown = 9
+	StatusInaccessible = 5,
+	IPKUnknown = 6
 };
 
 enum IPKPacketError {

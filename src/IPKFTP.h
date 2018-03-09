@@ -15,7 +15,6 @@ class IPKFTP {
 	static const int retries;
 	TCP tcp;
 
-	static bool FileExists(std::string filename);
 	static std::vector<unsigned char> FileLoad(std::string filename);
 	static void FileSave(std::string filename, std::vector<unsigned char> data);
 
@@ -29,9 +28,6 @@ public:
 
 	bool Upload(std::string filename);
 	bool Download(std::string filename);
-
-	bool Upload(std::string host, std::string port, std::string filename);
-	bool Download(std::string host, std::string port, std::string filename);
 };
 
 #endif

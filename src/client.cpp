@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
 #include "IPKFTP.h"
 
 const std::string client_usage = "./ipk-client -h host -p port [-r|-w] file";
@@ -23,16 +24,29 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
-	// TODO: handle errors
-	IPKFTP ipkftp;
-	ipkftp.ClientConnect(arguments.host, arguments.port);
-	if (arguments.mode == 'w') {
-		ipkftp.Upload(arguments.filename);
+	try {
+		IPKFTP ipkftp;
+		ipkftp.ClientConnect(arguments.host, arguments.port);
+		if (arguments.mode == 'w') {
+			ipkftp.Upload(arguments.filename);
+		}
+		else {
+			ipkftp.Download(arguments.filename);
+		}
+		ipkftp.ClientDisconnect();
 	}
-	else {
-		ipkftp.Download(arguments.filename);
+	catch (const std::ifstream::failure &e) {
+		(void)e; // bypass unreferenced local variable warning
+		if (arguments.mode == 'w') {
+			std::cerr << "Error: Unable to open file!" << std::endl;
+		}
+		else {
+			std::cerr << "Error: Unable to save file!" << std::endl;
+		}
 	}
-	ipkftp.ClientDisconnect();
+	catch (const std::exception &e) {
+		std::cerr << e.what() << std::endl;
+	}
 
 	return 0;
 };

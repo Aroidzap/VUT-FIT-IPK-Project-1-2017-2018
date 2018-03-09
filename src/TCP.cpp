@@ -150,7 +150,7 @@ void TCP::Listen(std::string port, std::function<void(TCP, const std::string, co
 		throw(TCPException(ListenFailed, "TCPError: ListenFailed!"));
 	}
 
-	// accept loop (infinite for now) // TODO: enable termination
+	// accept loop (infinite for now) //Possible Improvement: enable termination of server using stdin
 	bool done = false;
 	while (!done) {
 		TCPSocket client = accept(this->sock, NULL, NULL); // accept IPv4 and IPv6
