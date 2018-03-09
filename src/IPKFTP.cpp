@@ -38,21 +38,19 @@ void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 
 // ------------------------------------------
 
-bool IPKFTP::ServerStart(std::string port)
+void IPKFTP::ServerStart(std::string port)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
 	//Possible Improvement: enable termination of server using stdin
 
 	tcp.Listen(port, [](TCP client) {
-		std::thread thread(ServerThreadCode, std::ref(client));
+		std::thread thread(ServerThreadCode, std::move(client));
 		thread.detach(); //detach thread to be ready to accept another client without blocking
 	}); // infinite loop 
-
-	return true;
 }
 
-void IPKFTP::ServerThreadCode(TCP &client) {
+void IPKFTP::ServerThreadCode(TCP &&client) {
 	for (int i = 0; i <= retries; i++) {
 		try {
 			bool close = false;
@@ -120,7 +118,7 @@ void IPKFTP::ServerStop()
 	//not needed for now, since server starts an infinite loop
 }
 
-bool IPKFTP::ClientConnect(std::string host, std::string port)
+void IPKFTP::ClientConnect(std::string host, std::string port)
 {
 	//Possible Improvement: std::cout logging
 	if (tcp.IsConnected()) {
@@ -131,7 +129,7 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 			tcp.Connect(host, port);
 			tcp.Send(IPKPacket(CommandPing));
 			if (IPKPacket(tcp.Recv(IPKPacket::StatusSize)) == StatusOk) {
-				return true;
+				return;
 			}
 			else {
 				tcp.Close();
@@ -141,6 +139,7 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 		catch (const TCPException &e) {
 			if (e.error == ConnectionClosed || e.error == Timeout || e.error == ConnectFailed) {
 				tcp.Close();
+				if (i == retries) throw;
 			}
 			else {
 				throw;
@@ -150,15 +149,16 @@ bool IPKFTP::ClientConnect(std::string host, std::string port)
 			if (e.error == SignatureError || e.error == VersionError || e.error == TransmissionTypeError || 
 				e.error == SizeError || e.error == CRC32Error) {
 				tcp.Close();
+				if (i == retries) throw;
 			} else {
 				throw;
 			}
 		}
 	}
-	return false;
+	throw std::runtime_error("Error: Unable to connect!");
 }
 
-bool IPKFTP::Upload(std::string filename)
+void IPKFTP::Upload(std::string filename)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
@@ -168,9 +168,13 @@ bool IPKFTP::Upload(std::string filename)
 	for (int i = 0; i <= retries; i++) {
 		try {
 			tcp.Send(IPKPacket(OfferFile, filename, filedata));
-			if (IPKPacket(tcp.Recv(IPKPacket::StatusSize)).Type() == StatusOk) {
-				return true;
+			IPKPacket p(tcp.Recv(IPKPacket::StatusSize));
+			if (p == StatusOk) {
+				return;
 			} 
+			else if (p == StatusInaccessible) {
+				throw std::runtime_error("Error: File is not accessible on server!");
+			}
 			else {
 				continue;
 			}
@@ -193,10 +197,10 @@ bool IPKFTP::Upload(std::string filename)
 			}
 		}
 	}
-	return false;
+	throw std::runtime_error("Error: Upload failed!");
 }
 
-bool IPKFTP::Download(std::string filename)
+void IPKFTP::Download(std::string filename)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
@@ -207,11 +211,14 @@ bool IPKFTP::Download(std::string filename)
 			auto packet = tcp.Recv(IPKPacket::StatusSize);
 			tcp.Recv(packet, IPKPacket::ExpectedSize(packet) - IPKPacket::StatusSize);
 			IPKPacket p(packet);
-			if (p.Type() != OfferFile || p.GetFilename() != filename) { 
+			if (p == StatusInaccessible) {
+				throw std::runtime_error("Error: File is not accessible on server!");
+			}
+			else if (p != OfferFile || p.GetFilename() != filename) { 
 				continue; 
 			}
 			FileSave(p.GetFilename(), p.GetData());
-			return true;
+			return;
 		}
 		catch (const TCPException &e) {
 			if (e.error == Timeout) {
@@ -231,7 +238,7 @@ bool IPKFTP::Download(std::string filename)
 			}
 		}
 	}
-	return false;
+	throw std::runtime_error("Error: Download failed!");
 }
 
 void IPKFTP::ClientDisconnect()

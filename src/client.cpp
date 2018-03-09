@@ -43,9 +43,11 @@ int main(int argc, const char *argv[]) {
 		else {
 			std::cerr << "Error: Unable to save file!" << std::endl;
 		}
+		return 1;
 	}
 	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
+		return 1;
 	}
 
 	return 0;
