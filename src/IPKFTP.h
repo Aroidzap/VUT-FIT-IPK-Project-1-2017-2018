@@ -19,6 +19,7 @@ class IPKFTP {
 
 	static std::vector<unsigned char> FileLoad(std::string filename);
 	static void FileSave(std::string filename, std::vector<unsigned char> data);
+	static std::string FileName(std::string filepath);
 
 	static void ServerThreadCode(TCP &&client);
 public:
@@ -28,8 +29,8 @@ public:
 	void ClientConnect(std::string host, std::string port);
 	void ClientDisconnect();
 
-	void Upload(std::string filename);
-	void Download(std::string filename);
+	void Upload(std::string filepath);
+	void Download(std::string filepath);
 };
 
 #endif

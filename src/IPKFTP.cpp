@@ -59,6 +59,12 @@ void IPKFTP::FileSave(std::string filename, std::vector<unsigned char> data)
 	std::copy(std::begin(data), std::end(data), std::ostreambuf_iterator<char>(file));
 }
 
+std::string IPKFTP::FileName(std::string filepath)
+{
+	std::size_t delimiter_index = filepath.find_last_of("/\\");
+	return filepath.substr(delimiter_index + 1);
+}
+
 // ------------------------------------------
 
 void IPKFTP::ServerStart(std::string port)
@@ -199,12 +205,13 @@ void IPKFTP::ClientConnect(std::string host, std::string port)
 	throw std::runtime_error("Error: Unable to connect!");
 }
 
-void IPKFTP::Upload(std::string filename)
+void IPKFTP::Upload(std::string filepath)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
 
-	auto filedata = FileLoad(filename);
+	auto filename = FileName(filepath);
+	auto filedata = FileLoad(filepath);
 	
 	for (int i = 0; i <= retries; i++) {
 		try {
@@ -241,10 +248,12 @@ void IPKFTP::Upload(std::string filename)
 	throw std::runtime_error("Error: Upload failed!");
 }
 
-void IPKFTP::Download(std::string filename)
+void IPKFTP::Download(std::string filepath)
 {
 	//Possible Improvement: std::cout logging
 	//Possible Improvement: split large files
+
+	auto filename = FileName(filepath);
 
 	for (int i = 0; i <= retries; i++) {
 		try {
@@ -258,7 +267,7 @@ void IPKFTP::Download(std::string filename)
 			else if (p != OfferFile || p.GetFilename() != filename) { 
 				continue; 
 			}
-			FileSave(p.GetFilename(), p.GetData());
+			FileSave(filepath, p.GetData());
 			return;
 		}
 		catch (const TCPException &e) {
