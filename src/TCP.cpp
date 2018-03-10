@@ -21,6 +21,8 @@
 
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
+
+#define SEND_FLAGS MSG_NOSIGNAL
 #endif
 
 // Windows specific
@@ -39,13 +41,15 @@
 #define SHUT_RD SD_RECEIVE
 #define SHUT_WR SD_SEND
 #define SHUT_RDWR SD_BOTH
+
+#define SEND_FLAGS 0
 #endif
 
 // Settings
 const int TCP::maxconnections = SOMAXCONN;
 const bool TCP::nonblocking = true;
 static const std::size_t default_block_size = 1024;
-static const int default_timeout = 70;
+static const int default_timeout = 7;
 
 
 void TCP::Connect(std::string host, std::string port)
@@ -287,7 +291,7 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 				std::size_t to_write_current = std::min(this->block_size, to_write); // write up to maximal block size
 				
 				const char *ptr = reinterpret_cast<const char*>(&(*it));
-				long long send_ret = send(this->sock, ptr, to_write_current, 0);
+				long long send_ret = send(this->sock, ptr, to_write_current, SEND_FLAGS);
 				if (send_ret == SOCKET_ERROR) {
 					throw TCPException(SendRecvFailed, "TCPError: send Failed!");
 				} else if (send_ret == 0) {

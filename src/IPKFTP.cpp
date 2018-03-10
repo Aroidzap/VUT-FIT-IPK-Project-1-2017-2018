@@ -134,10 +134,10 @@ void IPKFTP::ServerThreadCode(TCP &&client) {
 		// ----- Try to send ERROR response -----
 		try {
 			if (send_error == StatusError) {
-				//client.Send(IPKPacket(StatusError));
+				client.Send(IPKPacket(StatusError));
 			}
 			else if (send_error == StatusInaccessible) {
-				//client.Send(IPKPacket(StatusInaccessible));
+				client.Send(IPKPacket(StatusInaccessible));
 				break; //close connection
 			}
 		}
