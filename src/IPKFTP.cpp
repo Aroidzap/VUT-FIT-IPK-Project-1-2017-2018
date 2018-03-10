@@ -33,6 +33,7 @@ void IPKFTP::ShowProgress(std::size_t bytes, std::size_t max)
 		std::cout << '\r' << bytes << " bytes | ";
 		std::cout << std::setprecision(1) << std::fixed;
 		std::cout << (static_cast<float>(bytes) / max) * 100.f << '%';
+		if (bytes == max) std::cout << std::endl;
 		std::cout.flush();
 		timer = std::chrono::high_resolution_clock::now();
 	}
