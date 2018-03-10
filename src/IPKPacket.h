@@ -19,7 +19,7 @@
 *  10h    | optional | filename (null terminated)
 *  ???    | optional | file data
 *
-*  end-4h | 4 bytes  | message CRC32
+*  end-4h | 4 bytes  | message CRC32 (0x04C11DB7 polynomial)
 *  ---------------------------------------
 *
 *  *the "overall message size" is complete size of message including CRC32

@@ -25,15 +25,16 @@ const int IPKFTP::retries = 2; // total number of tries = 1 + retries
 
 void IPKFTP::ShowProgress(std::size_t bytes, std::size_t max)
 {
-	static auto timer = std::chrono::system_clock::now();
-	auto dt = std::chrono::system_clock::now() - timer;
-	if (std::chrono::duration_cast<std::chrono::milliseconds>(dt).count() > 100 || bytes == max) 
+	static auto timer = std::chrono::high_resolution_clock::now();
+	auto dt = std::chrono::high_resolution_clock::now() - timer;
+	if (std::chrono::duration_cast<std::chrono::milliseconds>(dt).count() > 100 || bytes == max)
 	{
 		// update every 100ms
 		std::cout << '\r' << bytes << " bytes | ";
 		std::cout << std::setprecision(1) << std::fixed;
 		std::cout << (static_cast<float>(bytes) / max) * 100.f << '%';
-		timer = std::chrono::system_clock::now();
+		std::cout.flush();
+		timer = std::chrono::high_resolution_clock::now();
 	}
 }
 
