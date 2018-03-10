@@ -49,7 +49,7 @@
 const int TCP::maxconnections = SOMAXCONN;
 const bool TCP::nonblocking = true;
 static const std::size_t default_block_size = 1024;
-static const int default_timeout = 10;
+static const int default_timeout = 7;
 
 
 void TCP::Connect(std::string host, std::string port)
