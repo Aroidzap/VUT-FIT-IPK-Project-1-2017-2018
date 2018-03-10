@@ -7,27 +7,32 @@
 #include "CRC32.h"
 #include <array>
 
-// C++14 (extended constexpr) required !!!
+// Use C++14 extended constexpr if available
+#if __cpp_constexpr >= 201304
+#define CPP14_CONSTEXPR constexpr
+#else
+#define CPP14_CONSTEXPR
+#endif
 
-static constexpr uint32_t polynomial = crc32_polynomial;
+static CPP14_CONSTEXPR uint32_t polynomial = crc32_polynomial;
 
 struct CRC32LUT
 {
 	uint32_t values[0x100];
 
-	constexpr uint32_t& operator[](size_t i)
+	CPP14_CONSTEXPR uint32_t& operator[](size_t i)
 	{
 		return values[i];
 	}
 
-	constexpr const uint32_t& operator[](size_t i) const
+	CPP14_CONSTEXPR const uint32_t& operator[](size_t i) const
 	{
 		return values[i];
 	}
 };
 
 // bit reversal
-static constexpr uint32_t bit_reverse(const uint32_t x) {
+static CPP14_CONSTEXPR uint32_t bit_reverse(const uint32_t x) {
 	uint32_t reversed{ 0 };
 	for (uint32_t i = 0; i < 32; i++) {
 		reversed |= ((x >> i) & 1) << (31 - i);
@@ -36,7 +41,7 @@ static constexpr uint32_t bit_reverse(const uint32_t x) {
 }
 
 // function for compiling CRC32 lookup table (256 entries)
-static constexpr CRC32LUT crc32lut_compile(const uint32_t polynomial)
+static CPP14_CONSTEXPR CRC32LUT crc32lut_compile(const uint32_t polynomial)
 {
 	CRC32LUT lut{};
 
@@ -54,7 +59,7 @@ static constexpr CRC32LUT crc32lut_compile(const uint32_t polynomial)
 }
 
 // CRC32 lookup table (256 entries)
-static constexpr CRC32LUT crc32lut{ crc32lut_compile(polynomial) };
+static CPP14_CONSTEXPR CRC32LUT crc32lut(crc32lut_compile(polynomial));
 
 // CRC32 with lookup table
 uint32_t CRC32(const std::vector<unsigned char>::const_iterator begin, const std::vector<unsigned char>::const_iterator end)

@@ -96,7 +96,9 @@ void TCP::Connect(std::string host, std::string port)
 }
 
 void TCP::Listen(std::string port, std::function<void(TCP)> clientConnectionHandler, std::string host) {
-	Listen(port, [clientConnectionHandler](TCP conn, auto client_ip, auto client_port) {clientConnectionHandler(std::move(conn)); }, host);
+	Listen(port, [clientConnectionHandler](TCP conn, const std::string client_ip, const std::string client_port) {
+		clientConnectionHandler(std::move(conn)); 
+	}, host);
 }
 void TCP::Listen(std::string port, std::function<void(TCP, const std::string, const std::string)> clientConnectionHandler, std::string host)
 {
