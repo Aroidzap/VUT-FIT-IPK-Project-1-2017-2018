@@ -216,15 +216,14 @@ void TCP::Recv(std::vector<unsigned char>& data, std::size_t bytes, std::functio
 	fd_set rfds;
 	timeval time_out;
 
-	time_out.tv_sec = this->timeout;
-	time_out.tv_usec = 0;
-
-	FD_ZERO(&rfds);
-	FD_SET(this->sock, &rfds);
-
 	std::size_t to_read = bytes;
 
 	while (to_read) {
+		time_out.tv_sec = this->timeout;
+		time_out.tv_usec = 0;
+		FD_ZERO(&rfds);
+		FD_SET(this->sock, &rfds);
+
 		// wait for socket to be ready
 		int select_ret = 1;
 		if (nonblocking) {
@@ -269,16 +268,15 @@ void TCP::Send(const std::vector<unsigned char>& data, std::function<void(std::s
 	fd_set sfds;
 	timeval time_out;
 
-	time_out.tv_sec = this->timeout;
-	time_out.tv_usec = 0;
-
-	FD_ZERO(&sfds);
-	FD_SET(this->sock, &sfds);
-
 	auto it = data.begin();
 	std::size_t to_write = data.size();
 
 	while (to_write) {
+		time_out.tv_sec = this->timeout;
+		time_out.tv_usec = 0;
+		FD_ZERO(&sfds);
+		FD_SET(this->sock, &sfds);
+
 		// wait for socket to be ready
 		int select_ret = 1;
 		if (nonblocking) {
