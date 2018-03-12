@@ -1,3 +1,0 @@
-CRC32: http://create.stephan-brumme.com/crc32/#sarwate
-Compile time lookup tables: https://deathandthepenguinblog.wordpress.com/2016/05/12/compile-time-lookup-tables/
-Blocking I/O, Nonblocking I/O, And Epoll: https://eklitzke.org/blocking-io-nonblocking-io-and-epoll
